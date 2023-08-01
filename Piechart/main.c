@@ -1,7 +1,12 @@
 /* Bring in gd library functions */
 #include "gd.h"
+#include "gdfonts.h"
+
 /* Bring in standard I/O so we can output the PNG to a file */
 #include <stdio.h>
+#include <math.h>
+#include <time.h>
+#include <string.h>
 
 int* GetData(int *donnees){
     int total =0;
@@ -24,38 +29,65 @@ int* GetData(int *donnees){
     return curseur;
 }
 
-int drawChart(float *data, char *title) {
+int drawChart(float *data, char *title,char** label) {
+    srand(time(NULL));
   /* Declare the image */
+    int largeur=750;
+    int hauteur=750;
+    int largeurdiag= (3*largeur)/4;
+    int hauteurdiag=(3*hauteur)/4;
   gdImagePtr im;
+  gdFontPtr font;
   /* Declare output files */
   FILE *pngout, *jpegout;
   /* Declare color indexes */
-  int black,beige,white,blue,red,green,yellow,purple;
+  int black,coloralea,white;
   /* Allocate the image: 64 pixels across by 64 pixels tall */
-  im = gdImageCreate(750,750);
+  im = gdImageCreate(largeur,hauteur);
+  font= gdFontGetSmall();
   /* Allocate the color black (red, green and blue all minimum).
     Since this is the first color in a new image, it will
     be the background color. */
+  //enum couleur {black,beige,blue,red,green,yellow,purple,white};
   black = gdImageColorAllocate(im, 0, 0, 0);
-  beige = gdImageColorAllocate(im, 250, 200, 156);
-  blue = gdImageColorAllocate(im, 41, 134, 205);
-  red = gdImageColorAllocate(im, 225, 0, 0);
-  green = gdImageColorAllocate(im, 150, 200, 125);
-  yellow = gdImageColorAllocate(im, 255, 217, 100);
-  purple = gdImageColorAllocate(im, 142, 124, 200);
   white = gdImageColorAllocate(im, 255, 255, 255);
 
-  gdImageFilledRectangle(im,0,0,750,750,white);
+  gdImageFilledRectangle(im,0,0,largeur,hauteur,white);
   /* Draw a line from the upper left to the lower right,
     using white color index. */
-  gdImageEllipse(im, 375, 375, 500, 500, black);
-  gdImageFilledArc(im, 375, 375, 500, 500, 0, data[0], beige, gdPie);
-  gdImageFilledArc(im, 375, 375, 500, 500, data[0], data[1], blue, gdPie);
-  gdImageFilledArc(im, 375, 375, 500, 500, data[1], data[2], green, gdPie);
-  gdImageFilledArc(im, 375, 375, 500, 500, data[2], data[3], red, gdPie);
-  gdImageFilledArc(im, 375, 375, 500, 500, data[3], data[4], yellow, gdPie);
-  gdImageFilledArc(im, 375, 375, 500, 500, data[4], data[5], purple, gdPie);
-  gdImageString(im, 3, 600, 375, title, black);
+  char*T=title;
+  char**lab=label;
+//  for (int i=0;i<sizeof(lab);i++){
+//      printf("%s\n",&lab[i]);
+//  }
+
+  for (int i=0; i<6;i++){
+      coloralea=gdImageColorAllocate(im,rand()%256,rand()%256,rand()%256);
+      if (i==0){
+          gdImageSetThickness(im, 3);
+          gdImageArc(im, largeur/2+10, hauteur/2+5, largeurdiag, hauteurdiag,0,data[i], black);
+          gdImageArc(im, largeur/2, hauteur/2, largeurdiag, hauteurdiag,data[i],360, black);
+          int startX = largeur/2+10 + largeurdiag/2;
+          int startY = hauteur/2+5 + hauteurdiag/2;
+          int endX = largeur/2+10 + largeurdiag/2 * cos(data[i] * M_PI / 180);
+          int endY = hauteur/2+5 + hauteurdiag/2 * sin(data[i] * M_PI / 180);
+          gdImageLine(im, largeur/2, hauteur/2, startX, startY, black);
+          gdImageLine(im, largeur/2, hauteur/2, endX, endY, black);
+          gdImageSetThickness(im, 1);
+          gdImageFilledArc(im, largeur/2+10, hauteur/2+5, largeurdiag, hauteurdiag, 0, data[i], coloralea, gdPie);
+      }else{
+          gdImageSetThickness(im, 1);
+          gdImageFilledArc(im, largeur/2, hauteur/2, largeurdiag, hauteurdiag, data[i-1], data[i], coloralea, gdPie);
+          gdImageSetThickness(im, 3);
+          int startX = largeur/2 + largeurdiag/2 * cos(data[i-1] * M_PI / 180);
+          int startY = hauteur/2 + hauteurdiag/2 * sin(data[i-1] * M_PI / 180);
+          int endX = largeur/2 + largeurdiag/2 * cos(data[i] * M_PI / 180);
+          int endY = hauteur/2 + hauteurdiag/2 * sin(data[i] * M_PI / 180);
+          gdImageLine(im, largeur/2, hauteur/2, startX, startY, black);
+          gdImageLine(im, largeur/2, hauteur/2, endX, endY, black);
+      }
+   }
+  gdImageString(im, font , (1*largeur)/10, (1*hauteur)/10, &lab[0], black);
   /* Open a file for writing. "wb" means "write binary", important
     under MSDOS, harmless under Unix. */
   pngout = fopen("test.png", "wb");
@@ -78,24 +110,17 @@ int drawChart(float *data, char *title) {
   gdImageDestroy(im);
 }
 
-char* lecture(){
-    char* labels=(char*)malloc(sizeof(char*));
-    int * data=(int*)malloc(sizeof(int*));
-    char* title=(char*)malloc(sizeof(char*));
-
-    printf("Bonjour, veuillez entrer vos données, label puis quantité");
-    //scanf();
-
-    return labels, data, title;
-}
-
 int main(){
-    char* label[6]={"Perdrix, Canards, Lapins, Faisans, Cerfs, Sangliers"};
+    char* label[]={"Perdrix", "Canards", "Lapins", "Faisans", "Cerfs", "Sangliers"};
+//    char* temp=(char*)malloc(sizeof(char*));
+//    for (int i=0;i<sizeof(label);i++){
+//        strcpy(temp,label[i]);
+//        printf("%s\n",temp);
+//    }
     int tab[6]={56,120,47,69,12,23};
-    char* title="resultats de la chasse";
+    char title[]="resultats de la chasse";
     int* data;
     data=GetData(tab);
-    drawChart(data, title);
+    drawChart(data, title, label);
     return 0;
 }
-
