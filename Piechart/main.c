@@ -92,7 +92,7 @@ char* lecture(){
 int main(){
     char* label[6]={"Perdrix, Canards, Lapins, Faisans, Cerfs, Sangliers"};
     int tab[6]={56,120,47,69,12,23};
-    char title[]="resultats de la chasse";
+    char* title="resultats de la chasse";
     int* data;
     data=GetData(tab);
     drawChart(data, title);
