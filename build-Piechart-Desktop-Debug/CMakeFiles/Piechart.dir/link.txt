@@ -1,0 +1,1 @@
+/usr/bin/gcc -g CMakeFiles/Piechart.dir/main.c.o -o Piechart  -lgd 
