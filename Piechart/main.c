@@ -4,6 +4,7 @@
 
 /* Bring in standard I/O so we can output the PNG to a file */
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <string.h>
@@ -57,9 +58,10 @@ int drawChart(float *data, char *title,char** label) {
     using white color index. */
   char*T=title;
   char**lab=label;
-//  for (int i=0;i<sizeof(lab);i++){
-//      printf("%s\n",&lab[i]);
-//  }
+  int centerX=largeur/2;
+  int centerY=hauteur/2;
+  int centerXalt=largeur/2+10;
+  int centerYalt=hauteur/2+5;
 
   for (int i=0; i<6;i++){
       coloralea=gdImageColorAllocate(im,rand()%256,rand()%256,rand()%256);
@@ -67,22 +69,23 @@ int drawChart(float *data, char *title,char** label) {
           gdImageSetThickness(im, 3);
           gdImageArc(im, largeur/2+10, hauteur/2+5, largeurdiag, hauteurdiag,0,data[i], black);
           gdImageArc(im, largeur/2, hauteur/2, largeurdiag, hauteurdiag,data[i],360, black);
-          int startX = largeur/2+10 + largeurdiag/2;
-          int startY = hauteur/2+5 + hauteurdiag/2;
-          int endX = largeur/2+10 + largeurdiag/2 * cos(data[i] * M_PI / 180);
-          int endY = hauteur/2+5 + hauteurdiag/2 * sin(data[i] * M_PI / 180);
-          gdImageLine(im, largeur/2, hauteur/2, startX, startY, black);
-          gdImageLine(im, largeur/2, hauteur/2, endX, endY, black);
+          gdImageSetThickness(im, 5);
+          float startX = centerXalt + largeurdiag/2* cos(0 * M_PI / 180);
+          float startY = centerYalt + hauteurdiag/2*sin(0 * M_PI / 180);
+          float endX = centerXalt + largeurdiag/2 * cos(data[i] * M_PI / 180);
+          float endY = centerYalt + hauteurdiag/2 * sin(data[i] * M_PI / 180);
+          gdImageLine(im, centerXalt, centerYalt, startX, startY, black);
+          gdImageLine(im, centerXalt, centerYalt, endX, endY, black);
           gdImageSetThickness(im, 1);
           gdImageFilledArc(im, largeur/2+10, hauteur/2+5, largeurdiag, hauteurdiag, 0, data[i], coloralea, gdPie);
       }else{
           gdImageSetThickness(im, 1);
           gdImageFilledArc(im, largeur/2, hauteur/2, largeurdiag, hauteurdiag, data[i-1], data[i], coloralea, gdPie);
           gdImageSetThickness(im, 3);
-          int startX = largeur/2 + largeurdiag/2 * cos(data[i-1] * M_PI / 180);
-          int startY = hauteur/2 + hauteurdiag/2 * sin(data[i-1] * M_PI / 180);
-          int endX = largeur/2 + largeurdiag/2 * cos(data[i] * M_PI / 180);
-          int endY = hauteur/2 + hauteurdiag/2 * sin(data[i] * M_PI / 180);
+          float startX = largeur/2 + largeurdiag/2 * cos(data[i-1] * M_PI / 180);
+          float startY = hauteur/2 + hauteurdiag/2 * sin(data[i-1] * M_PI / 180);
+          float endX = largeur/2 + largeurdiag/2 * cos(data[i] * M_PI / 180);
+          float endY = hauteur/2 + hauteurdiag/2 * sin(data[i] * M_PI / 180);
           gdImageLine(im, largeur/2, hauteur/2, startX, startY, black);
           gdImageLine(im, largeur/2, hauteur/2, endX, endY, black);
       }
