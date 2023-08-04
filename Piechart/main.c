@@ -30,6 +30,42 @@ int* GetData(int *donnees){
     return curseur;
 }
 
+
+void createSegment(gdImagePtr im, int centerX, int centerY, int sizeX, int sizeY, int angleStart, int angleEnd, int colorExt, int colorInt){
+    //calculate the coordinates for the segment
+    float startX = centerX + sizeX/2* cos(angleStart * M_PI / 180);
+    float startY = centerY + sizeY/2* sin(angleStart * M_PI / 180);
+    float endX = centerX + sizeX/2 * cos(angleEnd * M_PI / 180);
+    float endY = centerY + sizeY/2 * sin(angleEnd * M_PI / 180);
+    //draw the limits of the segment
+    gdImageSetThickness(im, 4);
+    gdImageArc(im, centerX, centerY, sizeX, sizeY,angleStart,angleEnd, colorExt);
+    gdImageLine(im, centerX, centerY, startX, startY, colorExt);
+    gdImageLine(im, centerX, centerY, endX, endY, colorExt);
+    //fill the segment
+    gdImageSetThickness(im, 1);
+    gdImageFilledArc(im, centerX, centerY, sizeX, sizeY, angleStart, angleEnd, colorInt, gdPie);
+}
+
+void createLabel(gdImagePtr im,int centerX, int centerY, int size, int angleStart, int angleEnd, int color,char* label){
+    gdFontPtr font= gdFontGetSmall();;
+    double median = (angleStart + angleEnd) / 2.0;
+    double labelangle;
+    if (cos(median * M_PI / 180) < 0){
+        labelangle = size/1.8 + strlen(label)*(15/1.2);
+        }else{
+        size/1.8;
+    }
+    int labelX = centerX + labelangle * cos(median * M_PI / 180);
+    int labelY = centerY + size/1.8 * sin(median * M_PI / 180);
+    int pinX = centerX + size/2 * cos(median * M_PI / 180);
+    int pinY = centerY + size/2 * sin(median * M_PI / 180);
+    int pinXend = centerX + size/1.8 * cos(median * M_PI / 180);
+    int pinYend = labelY;
+    gdImageString(im, font , labelX, labelY, label, color);
+    gdImageLine(im, pinX, pinY, pinXend, pinYend, color);
+}
+
 int drawChart(float *data, char *title,char** label) {
     srand(time(NULL));
   /* Declare the image */
@@ -38,14 +74,13 @@ int drawChart(float *data, char *title,char** label) {
     int largeurdiag= (3*largeur)/4;
     int hauteurdiag=(3*hauteur)/4;
   gdImagePtr im;
-  gdFontPtr font;
   /* Declare output files */
   FILE *pngout, *jpegout;
   /* Declare color indexes */
   int black,coloralea,white;
   /* Allocate the image: 64 pixels across by 64 pixels tall */
   im = gdImageCreate(largeur,hauteur);
-  font= gdFontGetSmall();
+
   /* Allocate the color black (red, green and blue all minimum).
     Since this is the first color in a new image, it will
     be the background color. */
@@ -60,68 +95,41 @@ int drawChart(float *data, char *title,char** label) {
   char**lab=label;
   int centerX=largeur/2;
   int centerY=hauteur/2;
-  int centerXalt=largeur/2+10;
-  int centerYalt=hauteur/2+5;
+  int centerXalt=largeur/2+(5*largeur/100);
+  int centerYalt=hauteur/2+(2.5*hauteur/100);
 
   for (int i=0; i<6;i++){
       coloralea=gdImageColorAllocate(im,rand()%256,rand()%256,rand()%256);
+      /*the first segment is reparated from the rest of the diagram*/
       if (i==0){
-          gdImageSetThickness(im, 3);
-          gdImageArc(im, largeur/2+10, hauteur/2+5, largeurdiag, hauteurdiag,0,data[i], black);
-          gdImageArc(im, largeur/2, hauteur/2, largeurdiag, hauteurdiag,data[i],360, black);
-          gdImageSetThickness(im, 5);
-          float startX = centerXalt + largeurdiag/2* cos(0 * M_PI / 180);
-          float startY = centerYalt + hauteurdiag/2*sin(0 * M_PI / 180);
-          float endX = centerXalt + largeurdiag/2 * cos(data[i] * M_PI / 180);
-          float endY = centerYalt + hauteurdiag/2 * sin(data[i] * M_PI / 180);
-          gdImageLine(im, centerXalt, centerYalt, startX, startY, black);
-          gdImageLine(im, centerXalt, centerYalt, endX, endY, black);
-          gdImageSetThickness(im, 1);
-          gdImageFilledArc(im, largeur/2+10, hauteur/2+5, largeurdiag, hauteurdiag, 0, data[i], coloralea, gdPie);
+          createSegment(im,centerXalt,centerYalt,largeurdiag,hauteurdiag,0,data[i],black,coloralea);
+          createLabel(im,centerXalt,centerYalt,largeurdiag,0,data[i],black,label[i]);
       }else{
-          gdImageSetThickness(im, 1);
-          gdImageFilledArc(im, largeur/2, hauteur/2, largeurdiag, hauteurdiag, data[i-1], data[i], coloralea, gdPie);
-          gdImageSetThickness(im, 3);
-          float startX = largeur/2 + largeurdiag/2 * cos(data[i-1] * M_PI / 180);
-          float startY = hauteur/2 + hauteurdiag/2 * sin(data[i-1] * M_PI / 180);
-          float endX = largeur/2 + largeurdiag/2 * cos(data[i] * M_PI / 180);
-          float endY = hauteur/2 + hauteurdiag/2 * sin(data[i] * M_PI / 180);
-          gdImageLine(im, largeur/2, hauteur/2, startX, startY, black);
-          gdImageLine(im, largeur/2, hauteur/2, endX, endY, black);
+          createSegment(im,centerX,centerY,largeurdiag,hauteurdiag,data[i-1],data[i],black,coloralea);
+          createLabel(im,centerX,centerY,largeurdiag,data[i-1],data[i],black,label[i]);
       }
    }
-  gdImageString(im, font , (1*largeur)/10, (1*hauteur)/10, &lab[0], black);
-  /* Open a file for writing. "wb" means "write binary", important
-    under MSDOS, harmless under Unix. */
-  pngout = fopen("test.png", "wb");
+  //gdImageString(im, font , (1*largeur)/10, (1*hauteur)/10, &lab[0], black);
 
-  /* Do the same for a JPEG-format file. */
-  jpegout = fopen("test.jpg", "wb");
 
-  /* Output the image to the disk file in PNG format. */
+  /* write and register the output file */
+  pngout = fopen(title, "wb");
   gdImagePng(im, pngout);
 
-  /* Output the same image in JPEG format, using the default
-    JPEG quality setting. */
-  gdImageJpeg(im, jpegout, -1);
 
-  /* Close the files. */
+  /* Close the file. */
   fclose(pngout);
-  fclose(jpegout);
 
   /* Destroy the image in memory. */
   gdImageDestroy(im);
 }
 
-int main(){
+int main(int argc, char* argv[]){
     char* label[]={"Perdrix", "Canards", "Lapins", "Faisans", "Cerfs", "Sangliers"};
-//    char* temp=(char*)malloc(sizeof(char*));
-//    for (int i=0;i<sizeof(label);i++){
-//        strcpy(temp,label[i]);
-//        printf("%s\n",temp);
-//    }
+
+    //const char *title = argv[1];
     int tab[6]={56,120,47,69,12,23};
-    char title[]="resultats de la chasse";
+    char *title="resultats de la chasse";
     int* data;
     data=GetData(tab);
     drawChart(data, title, label);
