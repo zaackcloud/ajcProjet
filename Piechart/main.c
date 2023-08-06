@@ -1,6 +1,6 @@
 /* Bring in gd library functions */
-#include "gd.h"
-#include "gdfonts.h"
+#include <gd.h>
+#include <gdfonts.h>
 
 /* Bring in standard I/O so we can output the PNG to a file */
 #include <stdio.h>
@@ -9,22 +9,24 @@
 #include <time.h>
 #include <string.h>
 
-int* GetData(int *donnees){
+int* GetData(int data[], int nbarg){
     int total =0;
-    float res[sizeof donnees ];
+    int *donnees=data;
+    float res[nbarg];
     static float curseur[sizeof donnees/sizeof(int)];
 
-    for (int i =0; i<sizeof(donnees);i++){
+    for (int i =0; i<nbarg ;i++){
          total+=donnees[i];
     }
     float div= 360/(float)total;
 
-    for (int j =0; j<sizeof(donnees);j++){
+    for (int j =0; j<nbarg;j++){
         res[j]=(donnees[j]*div);
         if (j==0){
           curseur[j]=res[j];
         }else{
           curseur[j]=curseur[j-1]+res[j];
+          printf("%f\n",curseur[j]);
         }
     }
     return (int*)curseur;
@@ -49,6 +51,7 @@ void createSegment(gdImagePtr im, int centerX, int centerY, int sizeX, int sizeY
 
 void createLabel(gdImagePtr im,int centerX, int centerY, int size, int angleStart, int angleEnd, int color,char* label){
     gdFontPtr font= gdFontGetSmall();;
+    char* lab=label;
     double median = (angleStart + angleEnd) / 2.0;
     double labelangle;
     if (cos(median * M_PI / 180) < 0){
@@ -62,17 +65,21 @@ void createLabel(gdImagePtr im,int centerX, int centerY, int size, int angleStar
     int pinY = centerY + size/2 * sin(median * M_PI / 180);
     int pinXend = centerX + size/1.8 * cos(median * M_PI / 180);
     int pinYend = labelY;
-    gdImageString(im, font , labelX, labelY, label, color);
+    gdImageString(im, font , labelX, labelY, lab, color);
     gdImageLine(im, pinX, pinY, pinXend, pinYend, color);
 }
 
-int drawChart(int *data, const char *title,char** label) {
+int drawChart(int *data, const char *title,char* label[],int nbarg) {
     srand(time(NULL));
   /* Declare the image */
     int largeur=750;
     int hauteur=750;
     int largeurdiag= (largeur)/2;
     int hauteurdiag=(hauteur)/2;
+    char* lab[nbarg];
+    for (int i=0;i<nbarg;i++){
+        lab[i]=strdup(label[i]);
+    }
   gdImagePtr im;
   /* Declare output files */
   FILE *pngout, *jpegout;
@@ -101,11 +108,12 @@ int drawChart(int *data, const char *title,char** label) {
       coloralea=gdImageColorAllocate(im,rand()%256,rand()%256,rand()%256);
       /*the first segment is reparated from the rest of the diagram*/
       if (i==0){
+          //printf("%s\n",lab[i]);
           createSegment(im,centerXalt,centerYalt,largeurdiag,hauteurdiag,0,data[i],black,coloralea);
-          createLabel(im,centerXalt,centerYalt,largeurdiag,0,data[i],black,label[i]);
+          createLabel(im,centerXalt,centerYalt,largeurdiag,0,data[i],black,lab[i]);
       }else{
           createSegment(im,centerX,centerY,largeurdiag,hauteurdiag,data[i-1],data[i],black,coloralea);
-          createLabel(im,centerX,centerY,largeurdiag,data[i-1],data[i],black,label[i]);
+          createLabel(im,centerX,centerY,largeurdiag,data[i-1],data[i],black,lab[i]);
       }
    }
   //gdImageString(im, font , (1*largeur)/10, (1*hauteur)/10, &lab[0], black);
@@ -127,19 +135,21 @@ int main(int argc, char* argv[]){
 
 
     //char* label[]={"Perdrix", "Canards", "Lapins", "Faisans", "Cerfs", "Sangliers"};
-
+    int datasize=argc;
     const char *title = argv[1];
-     int *tab;
-    for (int i=2;i<argc-1;i+=2){
-        tab[i]=argv[i];
+    int tab[datasize];
+    for (int i=2;i<datasize;i+=2){
+        tab[i]=atoi(argv[i]);
+        printf("%d\n",tab[i]);
     }
-    char** label;
-    for (int i=3;i<argc-1;i+=2){
-        strcpy(label[i],argv[i]);
+    char* label[argc];
+    for (int i=3;i<argc;i+=2){
+        label[i]=strdup(argv[i]);
+        printf("%s\n",label[i]);
     }
     //char *title="resultats de la chasse";
     int* data;
-    data=GetData(tab);
-    drawChart(data, title, label);
+    data=GetData(tab,datasize);
+    drawChart(data, title, label,datasize);
     return 0;
 }
