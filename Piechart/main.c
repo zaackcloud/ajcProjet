@@ -27,7 +27,7 @@ int* GetData(int *donnees){
           curseur[j]=curseur[j-1]+res[j];
         }
     }
-    return curseur;
+    return (int*)curseur;
 }
 
 
@@ -52,7 +52,7 @@ void createLabel(gdImagePtr im,int centerX, int centerY, int size, int angleStar
     double median = (angleStart + angleEnd) / 2.0;
     double labelangle;
     if (cos(median * M_PI / 180) < 0){
-        labelangle = size/1.8 + strlen(label)*(15/1.2);
+        labelangle = size/1.8 + strlen(label)*(10/1.2);
         }else{
         size/1.8;
     }
@@ -66,13 +66,13 @@ void createLabel(gdImagePtr im,int centerX, int centerY, int size, int angleStar
     gdImageLine(im, pinX, pinY, pinXend, pinYend, color);
 }
 
-int drawChart(float *data, char *title,char** label) {
+int drawChart(int *data, const char *title,char** label) {
     srand(time(NULL));
   /* Declare the image */
     int largeur=750;
     int hauteur=750;
-    int largeurdiag= (3*largeur)/4;
-    int hauteurdiag=(3*hauteur)/4;
+    int largeurdiag= (largeur)/2;
+    int hauteurdiag=(hauteur)/2;
   gdImagePtr im;
   /* Declare output files */
   FILE *pngout, *jpegout;
@@ -91,8 +91,7 @@ int drawChart(float *data, char *title,char** label) {
   gdImageFilledRectangle(im,0,0,largeur,hauteur,white);
   /* Draw a line from the upper left to the lower right,
     using white color index. */
-  char*T=title;
-  char**lab=label;
+
   int centerX=largeur/2;
   int centerY=hauteur/2;
   int centerXalt=largeur/2+(5*largeur/100);
@@ -125,11 +124,20 @@ int drawChart(float *data, char *title,char** label) {
 }
 
 int main(int argc, char* argv[]){
-    char* label[]={"Perdrix", "Canards", "Lapins", "Faisans", "Cerfs", "Sangliers"};
 
-    //const char *title = argv[1];
-    int tab[6]={56,120,47,69,12,23};
-    char *title="resultats de la chasse";
+
+    //char* label[]={"Perdrix", "Canards", "Lapins", "Faisans", "Cerfs", "Sangliers"};
+
+    const char *title = argv[1];
+     int *tab;
+    for (int i=2;i<argc-1;i+=2){
+        tab[i]=argv[i];
+    }
+    char** label;
+    for (int i=3;i<argc-1;i+=2){
+        strcpy(label[i],argv[i]);
+    }
+    //char *title="resultats de la chasse";
     int* data;
     data=GetData(tab);
     drawChart(data, title, label);
