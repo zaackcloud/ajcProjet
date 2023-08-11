@@ -57,7 +57,7 @@ void createLabel(gdImagePtr im,int centerX, int centerY, int size, int angleStar
     if (cos(median * M_PI / 180) < 0){
         labelangle = size/1.8 + strlen(label)*(10/1.2);
         }else{
-        size/1.8;
+        labelangle=size/1.8;
     }
     int labelX = centerX + labelangle * cos(median * M_PI / 180);
     int labelY = centerY + size/1.8 * sin(median * M_PI / 180);
@@ -69,87 +69,123 @@ void createLabel(gdImagePtr im,int centerX, int centerY, int size, int angleStar
     gdImageLine(im, pinX, pinY, pinXend, pinYend, color);
 }
 
-int drawChart(int *data, const char *title,char* label[],int nbarg) {
-    srand(time(NULL));
-  /* Declare the image */
+//int drawChart(int *data, const char *title,char* label[],int nbarg) {
+//    srand(time(NULL));
+//  /* Declare the image */
+//    int largeur=750;
+//    int hauteur=750;
+//    int largeurdiag= (largeur)/2;
+//    int hauteurdiag=(hauteur)/2;
+//    char* lab[nbarg];
+//    for (int i=0;i<nbarg;i++){
+//        lab[i]=strdup(label[i]);
+//    }
+//  gdImagePtr im;
+//  /* Declare output files */
+//  FILE *pngout, *jpegout;
+//  /* Declare color indexes */
+//  int black,coloralea,white;
+//  /* Allocate the image: 64 pixels across by 64 pixels tall */
+//  im = gdImageCreate(largeur,hauteur);
+
+//  /* Allocate the color black (red, green and blue all minimum).
+//    Since this is the first color in a new image, it will
+//    be the background color. */
+//  //enum couleur {black,beige,blue,red,green,yellow,purple,white};
+//  black = gdImageColorAllocate(im, 0, 0, 0);
+//  white = gdImageColorAllocate(im, 255, 255, 255);
+
+//  gdImageFilledRectangle(im,0,0,largeur,hauteur,white);
+//  /* Draw a line from the upper left to the lower right,
+//    using white color index. */
+
+//  int centerX=largeur/2;
+//  int centerY=hauteur/2;
+//  int centerXalt=largeur/2+(5*largeur/100);
+//  int centerYalt=hauteur/2+(2.5*hauteur/100);
+
+//  for (int i=0; i<6;i++){
+//      coloralea=gdImageColorAllocate(im,rand()%256,rand()%256,rand()%256);
+//      /*the first segment is reparated from the rest of the diagram*/
+//      if (i==0){
+//          //printf("%s\n",lab[i]);
+//          createSegment(im,centerXalt,centerYalt,largeurdiag,hauteurdiag,0,data[i],black,coloralea);
+//          createLabel(im,centerXalt,centerYalt,largeurdiag,0,data[i],black,lab[i]);
+//      }else{
+//          createSegment(im,centerX,centerY,largeurdiag,hauteurdiag,data[i-1],data[i],black,coloralea);
+//          createLabel(im,centerX,centerY,largeurdiag,data[i-1],data[i],black,lab[i]);
+//      }
+//   }
+//  //gdImageString(im, font , (1*largeur)/10, (1*hauteur)/10, &lab[0], black);
+
+
+//  /* write and register the output file */
+//  pngout = fopen(title, "wb");
+//  gdImagePng(im, pngout);
+
+
+//  /* Close the file. */
+//  fclose(pngout);
+
+//  /* Destroy the image in memory. */
+//  gdImageDestroy(im);
+//}*/
+
+int main(int argc, char* argv[]){
+ /*declaration des différentes valeurs utilisées pour créer le diagramme*/
     int largeur=750;
     int hauteur=750;
     int largeurdiag= (largeur)/2;
     int hauteurdiag=(hauteur)/2;
-    char* lab[nbarg];
-    for (int i=0;i<nbarg;i++){
-        lab[i]=strdup(label[i]);
+    int black,coloralea,white;
+    int centerX=largeur/2;
+    int centerY=hauteur/2;
+    int centerXalt=largeur/2+(5*largeur/100);
+    int centerYalt=hauteur/2+(2.5*hauteur/100);
+
+    gdImagePtr im;
+    FILE *pngout;
+    im = gdImageCreate(largeur,hauteur);
+
+    /*récupere la valeur utilisée pour le titre*/
+    const char *title = strcat(argv[1],".png");
+
+    /*récupere les données pondérales passées en arguments*/
+    int curseurAngle=0;
+    int total = 0;
+        for (int i = 2; i < argc - 1; i += 2) {
+            total += atoi(argv[i]);
+        }
+    black = gdImageColorAllocate(im, 0, 0, 0);
+    white = gdImageColorAllocate(im, 255, 255, 255);
+    gdImageFilledRectangle(im,0,0,largeur,hauteur,white);
+    for (int i=2; i<argc; i+=2){
+        coloralea=gdImageColorAllocate(im,rand()%256,rand()%256,rand()%256);
+        double angle = atof(argv[i]);
+        int curseurAngleEnd = curseurAngle + (360 * angle / total);
+//        if (i == 2){
+
+//            createSegment(im,centerXalt,centerYalt,largeurdiag,hauteurdiag,curseurAngle,curseurAngleEnd,black,coloralea);
+//            createLabel(im, centerXalt, centerYalt, largeurdiag,curseurAngle, curseurAngleEnd,black,argv[i+1]);
+//        }else{
+
+            createSegment(im,centerX,centerY,largeurdiag,hauteurdiag,curseurAngle,curseurAngleEnd,black,coloralea);
+            createLabel(im, centerX, centerY, largeurdiag,curseurAngle, curseurAngleEnd,black,argv[i+1]);
+//        }
+        curseurAngle=curseurAngleEnd;
     }
-  gdImagePtr im;
-  /* Declare output files */
-  FILE *pngout, *jpegout;
-  /* Declare color indexes */
-  int black,coloralea,white;
-  /* Allocate the image: 64 pixels across by 64 pixels tall */
-  im = gdImageCreate(largeur,hauteur);
-
-  /* Allocate the color black (red, green and blue all minimum).
-    Since this is the first color in a new image, it will
-    be the background color. */
-  //enum couleur {black,beige,blue,red,green,yellow,purple,white};
-  black = gdImageColorAllocate(im, 0, 0, 0);
-  white = gdImageColorAllocate(im, 255, 255, 255);
-
-  gdImageFilledRectangle(im,0,0,largeur,hauteur,white);
-  /* Draw a line from the upper left to the lower right,
-    using white color index. */
-
-  int centerX=largeur/2;
-  int centerY=hauteur/2;
-  int centerXalt=largeur/2+(5*largeur/100);
-  int centerYalt=hauteur/2+(2.5*hauteur/100);
-
-  for (int i=0; i<6;i++){
-      coloralea=gdImageColorAllocate(im,rand()%256,rand()%256,rand()%256);
-      /*the first segment is reparated from the rest of the diagram*/
-      if (i==0){
-          //printf("%s\n",lab[i]);
-          createSegment(im,centerXalt,centerYalt,largeurdiag,hauteurdiag,0,data[i],black,coloralea);
-          createLabel(im,centerXalt,centerYalt,largeurdiag,0,data[i],black,lab[i]);
-      }else{
-          createSegment(im,centerX,centerY,largeurdiag,hauteurdiag,data[i-1],data[i],black,coloralea);
-          createLabel(im,centerX,centerY,largeurdiag,data[i-1],data[i],black,lab[i]);
-      }
-   }
-  //gdImageString(im, font , (1*largeur)/10, (1*hauteur)/10, &lab[0], black);
 
 
-  /* write and register the output file */
-  pngout = fopen(title, "wb");
-  gdImagePng(im, pngout);
+    /* write and register the output file */
+    pngout = fopen(title, "wb");
+    gdImagePng(im, pngout);
 
 
-  /* Close the file. */
-  fclose(pngout);
+    /* Close the file. */
+    fclose(pngout);
 
-  /* Destroy the image in memory. */
-  gdImageDestroy(im);
-}
+    /* Destroy the image in memory. */
+    gdImageDestroy(im);
 
-int main(int argc, char* argv[]){
-
-
-    //char* label[]={"Perdrix", "Canards", "Lapins", "Faisans", "Cerfs", "Sangliers"};
-    int datasize=argc;
-    const char *title = argv[1];
-    int tab[datasize];
-    for (int i=2;i<datasize;i+=2){
-        tab[i]=atoi(argv[i]);
-        printf("%d\n",tab[i]);
-    }
-    char* label[argc];
-    for (int i=3;i<argc;i+=2){
-        label[i]=strdup(argv[i]);
-        printf("%s\n",label[i]);
-    }
-    //char *title="resultats de la chasse";
-    int* data;
-    data=GetData(tab,datasize);
-    drawChart(data, title, label,datasize);
     return 0;
 }
